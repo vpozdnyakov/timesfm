@@ -72,6 +72,9 @@ class TimesFM_2p5_200M_torch_module(nn.Module):
     if torch.cuda.is_available():
       self.device = torch.device("cuda:0")
       self.device_count = torch.cuda.device_count()
+    elif torch.mps.is_available():
+      self.device = torch.device("mps:0")
+      self.device_count = torch.mps.device_count()
     else:
       self.device = torch.device("cpu")
       self.device_count = 1
@@ -384,10 +387,6 @@ class TimesFM_2p5_200M_torch(timesfm_2p5_base.TimesFM_2p5, ModelHubMixin):
           f"Horizon must be less than the max horizon. {horizon} > {fc.max_horizon}."
         )
 
-      inputs = (
-        torch.from_numpy(np.array(inputs)).to(self.model.device).to(torch.float32)
-      )
-      masks = torch.from_numpy(np.array(masks)).to(self.model.device).to(torch.bool)
       batch_size = inputs.shape[0]
 
       if fc.infer_is_positive:
@@ -466,7 +465,7 @@ class TimesFM_2p5_200M_torch(timesfm_2p5_base.TimesFM_2p5, ModelHubMixin):
           full_forecast,
         )
 
-      full_forecast = full_forecast.detach().cpu().numpy()
+      full_forecast = full_forecast
       return full_forecast[..., 5], full_forecast
 
     self.compiled_decode = _compiled_decode
